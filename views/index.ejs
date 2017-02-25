@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+	<head>
+    	<title>Instabot</title>
+        <link href="/stylesheets/bootstrap.min.css" rel="stylesheet">
+    	<link rel='stylesheet' href='/stylesheets/style.css' />
+        <script src="/javascripts/index.js"></script>
+				<% if(page != "General"){ %> <script type="text/javascript">getSession('<%= page %>'); setInterval(function(){getSession('<%= page %>')}, 1000)</script> <% } %>
+    </head>
+	<body>
+        <nav class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container-fluid">
+                <div class="navbar-header">
+                    <a class="navbar-brand">Instabot</a>
+                </div>
+                <div id="navbar" class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav navbar-left">
+                        <li><a href="?page=General">General</a></li>
+                        <li><a href="?page=Likebot">Likebot</a></li>
+                        <li><a href="?page=AutoComment">AutoComment</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+    	<div class="container-fluid">
+    		<div class="row">
+    			<div class="col-sm-3 col-md-2 sidebar">
+    				<ul class="nav nav-sidebar">
+    					<li><a href="" onclick="addAccount()">Add Account</a></li>
+                            <% users.forEach(function(us){ %>
+                            <li><a href="?user=<%= us.username %>"
+                            <% if(us.username == user.username){ %> <%="class=active" %> <% } %> >
+                            <%= us.username %></a></li>
+                            <% }); %>
+    				</ul>
+    			</div>
+    			<div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 content">
+                    <% if(user != "none") { %>
+                        <h1 class="page-header"> <%= page %> </h1>
+                        <% if(page == "Likebot") { %>
+
+													<div class="panel panel-default">
+															<div class="panel-heading">Session:</div>
+															<div class="panel-body">
+																<div id=noSession>
+																	<p>There are no sessions scheduled</p>
+																</div>
+																<div id="sessionScheduled" style="display: none">
+																	<p>Next session starts at: <span id="sessionDate" class="label label-default"></span></p>
+																</div>
+																<div id="sessionActive" style="display: none">
+																	<p>Session is currently: <span class="label label-success">Active</span></p>
+																	<p>Session progress: <span id="sessionProgress" class="label label-default"></span></p>
+																	<div style="width: 70%" class="progress">
+																		<div id="likeProgress" class="progress-bar progress-bar-striped active" role="progressbar"
+  																		aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+    																	0%
+  																	</div>
+																	</div>
+																	<p>Next picture to like: <a id="nextImgLink"></a></p>
+																</div>
+															</div>
+													</div>
+
+                          <div class="panel panel-default">
+                          	<div class="panel-heading">Settings:</div>
+                          	<div class="panel-body">
+                              <div class="status-holder">
+																<% if(user.settings.autoLike.running == "true") { %>
+                                  <p>Status: <button type="button" onclick="updateRunning(this, '<%= page %>','<%= user.username %>')" class="btn btn-success">Running</button></p>
+																<% } else { %>
+																	<p>Status: <button type="button" onclick="updateRunning(this, '<%= page %>','<%= user.username %>')" class="btn btn-danger">Stopped</button></p>
+																<% } %>
+															</div>
+
+                              <p>Start a session every <input id="<%= page %>1" type="number" value= <%= user.settings.autoLike.sessionDelayMin %> > to <input id="<%= page %>2" type="number" value=<%= user.settings.autoLike.sessionDelayMax %>> minutes</p>
+                              <p>Like between <input id="<%= page %>3" type="number" value= <%= user.settings.autoLike.likeCountMin %> > and <input id="<%= page %>4" type="number" value=<%= user.settings.autoLike.likeCountMax %>> pictures per session</p>
+															<p>Wait between <input id="<%= page %>5" type="number" value= <%= user.settings.autoLike.likeDelayMin %> > and <input id="<%= page %>6" type="number" value=<%= user.settings.autoLike.likeDelayMax %>> seconds after each like</p>
+                              <p>Like a maximum of <input id="<%= page %>7" type="number" value= <%= user.settings.autoLike.dailyMaxLikeCount %> > pictures per day</p>
+                            </div>
+                        	</div>
+
+                          <div class="panel panel-default">
+                            <div class="panel-heading">Sources:</div>
+                            <div class="panel-body">
+															<div class="checkbox">
+															  <label>
+															    <input id="<%= page %>Box1" type="checkbox" value="likeByTag" <% if(user.settings.autoLike.likeByTag == "true"){%> checked <%}%>>
+															    Like by tag name
+															  </label>
+															</div>
+                              <textarea class="form-control" id="<%= page %>8" rows="4"
+																><%= user.settings.autoLike.likeByTagList %></textarea>
+
+                            </div>
+                          </div>
+
+                          <button type="button" onclick="updateSettings('<%= page %>','<%= user.username %>')" class="btn btn-default btn-lg">Save changes</button
+                        <% }
+												else if(page == "General")
+												{ %>
+													<div class="panel panel-default">
+                          	<div class="panel-heading">Details:</div>
+                          	<div class="panel-body">
+															<% if(typeof error != "undefined") { %>
+																<h1>Failed to authenticate, please check password</h1>
+															<% } else { %>
+															<div class="infoHolder">
+																<ul class="list-group">
+																  <li class="list-group-item">Username: </li>
+																  <li class="list-group-item">Full Name: </li>
+																  <li class="list-group-item">Biography: </li>
+																  <li class="list-group-item">Follower: </li>
+																	<li class="list-group-item">Following: </li>
+																</ul>
+																<ul class="list-group">
+																  <li class="list-group-item"><%= account.username %></li>
+																  <li class="list-group-item"><%= account.fullName %></li>
+																  <li class="list-group-item"><%= account.biography %></li>
+																	<li class="list-group-item"><%= account.followerCount %></li>
+																	<li class="list-group-item"><%= account.followingCount %></li>
+																</ul>
+															</div>
+															<img class="profilePic" src="<%= account.picture %>" width="200">
+															<% } %>
+															<div class="btnHolder">
+																<button type="button" class="btn btn-default btn-lg" onclick="changeUsername('<%= user.username %>')">
+																  <span class="glyphicon glyphicon-user" aria-hidden="true"></span> Change username
+																</button>
+																<button type="button" class="btn btn-default btn-lg" onclick="changePassword('<%= user.username %>')">
+																  <span class="glyphicon glyphicon-lock" aria-hidden="true"></span> Change password
+																</button>
+																<button type="button" class="btn btn-default btn-lg" onclick="removeAccount('<%= user.username %>')">
+																  <span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Remove Account
+																</button>
+															</div>
+														</div>
+													</div>
+											<%	}
+													else if(page == "AutoComment")
+													{ %>
+														<div class="panel panel-default">
+	                          	<div class="panel-heading">Settings:</div>
+	                          	<div class="panel-body">
+	                              <div class="status-holder">
+																	<% if(user.settings.autoComment.running == "true") { %>
+	                                  <p>Status: <button type="button" onclick="updateRunning(this, '<%= page %>','<%= user.username %>')" class="btn btn-success">Running</button></p>
+																	<% } else { %>
+																		<p>Status: <button type="button" onclick="updateRunning(this, '<%= page %>','<%= user.username %>')" class="btn btn-danger">Stopped</button></p>
+																	<% } %>
+																</div>
+
+																<p>Auto-Commenter runs only next to the Auto-Liker</p>
+	                              <p>Make a comment every <input id="<%= page %>1" type="number" value= <%= user.settings.autoComment.lowCommentFrequency %> > to <input id="<%= page %>2" type="number" value=<%= user.settings.autoComment.maxCommentFrequency %>> pictures</p>
+
+																<textarea class="form-control" id="<%= page %>3" rows="4"
+																	><%= user.settings.autoComment.commentList %></textarea>
+
+	                            </div>
+	                            </div>
+															<button type="button" onclick="updateSettings('<%= page %>','<%= user.username %>')" class="btn btn-default btn-lg">Save changes</button>
+	                        	</div>
+											<%	}
+                    }else { %>
+                        <h1 class="page-header">Please select a user</h1>
+                    <% } %>
+    			</div>
+    		</div>
+    	</div>
+	</body>
+</html>

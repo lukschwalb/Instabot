@@ -1,0 +1,1 @@
+DEBUG=instabot:* npm start
