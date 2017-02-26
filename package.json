@@ -13,6 +13,7 @@
     "express": "~4.14.1",
     "morgan": "~1.7.0",
     "serve-favicon": "~2.3.2",
-    "stylus": "0.54.5"
+    "instagram-private-api": "~0.5.12",
+    "mongodb": "~2.2.24"
   }
 }
