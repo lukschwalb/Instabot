@@ -1,2 +1,2 @@
-mkdir ./cookies/
+mkdir -p ./cookies/
 DEBUG=instabot:* npm start

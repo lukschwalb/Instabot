@@ -14,6 +14,7 @@
     "morgan": "~1.7.0",
     "serve-favicon": "~2.3.2",
     "instagram-private-api": "~0.5.12",
-    "mongodb": "~2.2.24"
+    "mongodb": "~2.2.24",
+    "bluebird": "~3.4.7"
   }
 }

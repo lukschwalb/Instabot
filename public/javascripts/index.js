@@ -6,7 +6,7 @@ function sendAjax(params)
 	xhttp.send();
 }
 
-function getSession(type)
+function getSession(type, username)
 {
 	var response = '';
 	var xhttp = getXhttp();
@@ -59,7 +59,7 @@ function getSession(type)
 		}
 	}
 
-	xhttp.open('GET', '/ajax/?type=' + type, true);
+	xhttp.open('GET', '/ajax/?type=' + type + "&username=" + username, true);
 	xhttp.send(null);
 }
 

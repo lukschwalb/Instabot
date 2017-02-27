@@ -122,7 +122,7 @@ function likeMedia(media, instaSession, username, db, sessionId, commentData, ca
             callback(username);
           }
           Client.Like.create(instaSession, media.id);
-          dailyMaxLikeCount ++;
+          todayLikeCount ++;
 
           logger.log("Liked page " + media.params.webLink);
 
@@ -153,8 +153,8 @@ function likeMedia(media, instaSession, username, db, sessionId, commentData, ca
 function checkTodayLikes(dailyMaxLikeCount, username)
 {
   var date = new Date();
-  console.log(todayLikeCount + "  " + dailyMaxLikeCount);
-  if(today.getDay() == date.Day() && today.getMonth() == date.getMonth && today.getFullYear() == date.getFullYear())
+
+  if(today.getDay() == date.getDay() && today.getMonth() == date.getMonth() && today.getFullYear() == date.getFullYear())
   {
     if(todayLikeCount < dailyMaxLikeCount)
     {
@@ -174,7 +174,7 @@ function checkTodayLikes(dailyMaxLikeCount, username)
   setInterval(function()
   {
     var date = new Date();
-    if(today.getDay() != date.Day())
+    if(today.getDay() != date.getDay())
     {
       sessionController.newLikeSession(username);
       today = new Date();
