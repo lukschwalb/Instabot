@@ -15,7 +15,7 @@ var init = function()
   {
     db = _db;
     sessions = _db.collection("sessions");
-    cleanLikeSession();
+    cleanAllLikeSession();
     setNotRunning();
     setInterval(checkSessions, 2000);
     logger.log("SessionController initialized");
@@ -64,7 +64,13 @@ var newLikeSession = function(creator)
   })
 }
 
-var cleanLikeSession = function()
+var cleanLikeSession = function(username)
+{
+  var sessions = db.collection("sessions");
+  sessions.remove({type: "Likebot", creator: username});
+}
+
+var cleanAllLikeSession = function()
 {
   var sessions = db.collection("sessions");
   sessions.remove({type: "Likebot"});

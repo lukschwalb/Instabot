@@ -26,27 +26,32 @@ router.get('/update', function(req, res, next)
 						logger.log("Changed state of " + type + " to " + query.state);
 						if(query.state == "true")
 						{
-							sessionController.cleanLikeSession();
+							sessionController.cleanLikeSession(query.username);
 							sessionController.newLikeSession(query.username);
 						}
 						else
 						{
-							sessionController.cleanLikeSession();
+							sessionController.cleanLikeSession(query.username);
 						}
 					}
 					else if(type == "AutoComment")
 					{
 						db.collection("accounts").update({username: query.username}, {$set: {"settings.autoComment.running": query.state}});
 						logger.log("Changed state of " + type + " to " + query.state);
-						if(query.state == "true")
+
+						db.collection("accounts").findOne({username: query.username}, function(error, userObj)
 						{
-							sessionController.cleanLikeSession();
-							sessionController.newLikeSession(query.username);
-						}
-						else
-						{
-							sessionController.cleanLikeSession();
-						}
+							assert.equal(null, error);
+
+							if(userObj.settings.autoLike.running == "true" && query.state == "true")
+							{
+								sessionController.newLikeSession(query.username);
+							}
+							else
+							{
+								sessionController.cleanLikeSession(query.username);
+							}
+						});
 					}
 				}
 			}
@@ -71,7 +76,7 @@ router.get('/update', function(req, res, next)
 								"settings.autoLike.likeByTag": query.checkbox1
 							}});
 							logger.log("Likebot settings updated");
-							sessionController.cleanLikeSession();
+							sessionController.cleanLikeSession(query.username);
 							db.collection("accounts").findOne({username: query.username}, function(error, userObj)
 						  {
 								assert.equal(null, error);
@@ -93,7 +98,7 @@ router.get('/update', function(req, res, next)
 								"settings.autoComment.commentList": query.field3
 							}});
 							logger.log("AutoComment settings updated");
-							sessionController.cleanLikeSession();
+							sessionController.cleanLikeSession(query.username);
 							db.collection("accounts").findOne({username: query.username}, function(error, userObj)
 						  {
 								assert.equal(null, error);

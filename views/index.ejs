@@ -116,8 +116,8 @@
 																</ul>
 																<ul class="list-group">
 																  <li class="list-group-item"><%= account.username %></li>
-																  <li class="list-group-item"><%= account.fullName %></li>
-																  <li class="list-group-item"><%= account.biography %></li>
+																  <li class="list-group-item"><%= account.fullName || "No full name"%></li>
+																  <li class="list-group-item"><%= account.biography || "No bio"%></li>
 																	<li class="list-group-item"><%= account.followerCount %></li>
 																	<li class="list-group-item"><%= account.followingCount %></li>
 																</ul>
