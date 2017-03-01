@@ -8,7 +8,6 @@ var logger = new Log();
 var db;
 var sessions;
 
-
 var init = function()
 {
   mongo(function(_db)
@@ -26,6 +25,7 @@ var init = function()
 var newLikeSession = function(creator)
 {
   var accounts = db.collection("accounts");
+  cleanLikeSession(creator);
   accounts.findOne({username: creator}, function(error, user)
   {
     assert.equal(null, error);
@@ -98,7 +98,13 @@ function checkSessions()
             {
               instaSessionController.getSession(session.creator, function(instaSession)
               {
-                autolike.likeByTag(session, instaSession, newLikeSession);
+                exp =
+                {
+                  newLikeSession: newLikeSession,
+                  cleanLikeSession: cleanLikeSession
+                }
+
+                autolike.likeByTag(session, instaSession, exp);
               });
             }
           }

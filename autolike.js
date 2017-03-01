@@ -3,16 +3,17 @@ var _ = require('underscore');
 var Promise = require('bluebird');
 var mongo = require("./mongo.js");
 var Log = require("./log.js");
-var sessionController = require("./sessionController.js");
 var logger = new Log();
 var todayLikeCount = 0;
 var today = new Date();
+var db;
 
 
-var likeByTag = function(session, instaSession, callback)
+var likeByTag = function(session, instaSession, sessionController)
 {
-  mongo(function(db)
+  mongo(function(_db)
   {
+    db = _db;
     var tagName = session.source;
     var likeAmount = session.likeCount;
     var username = session.creator;
@@ -40,13 +41,13 @@ var likeByTag = function(session, instaSession, callback)
       };
 
       var mediaArray = [];
-      var medias = grabMedias(likeAmount, feed, mediaArray, 0, settings.dailyMaxLikeCount, userObj.username, function(medias)
+      var medias = grabMedias(likeAmount, feed, mediaArray, 0, userObj.username, function(medias)
       {
         medias.forEach(function(media)
         {
           db.collection("sessions").update({_id: sessionId}, {$addToSet: {mediaList: media.params.webLink}});
           var partDelay = _.random(parseInt(settings.likeDelayMin), parseInt(settings.likeDelayMax)) * 1000;
-          setTimeout(likeMedia, likeDelay, media, instaSession, username, db, sessionId, commentData, callback);
+          setTimeout(likeMedia, likeDelay, media, instaSession, username, sessionId, commentData, settings.dailyMaxLikeCount, sessionController);
           likeDelay += partDelay;
         });
       });
@@ -55,7 +56,7 @@ var likeByTag = function(session, instaSession, callback)
 }
 
 
-function grabMedias(mediaAmount, feed, mediaArray, mediaCount, dailyMaxLikeCount, username, callback)
+function grabMedias(mediaAmount, feed, mediaArray, mediaCount, username, callback)
 {
     var more = true;
     Promise.map(_.range(0, 1), function()
@@ -66,7 +67,7 @@ function grabMedias(mediaAmount, feed, mediaArray, mediaCount, dailyMaxLikeCount
       for(var i = 0; i < medias[0].length; i++)
       {
         var media = medias[0][i];
-        if(checkMedia(media, dailyMaxLikeCount, username))
+        if(checkMedia(media, username))
         {
           mediaArray.push(media);
           mediaCount ++;
@@ -86,23 +87,20 @@ function grabMedias(mediaAmount, feed, mediaArray, mediaCount, dailyMaxLikeCount
     })
 }
 
-function checkMedia(media, dailyMaxLikeCount, username)
+function checkMedia(media, username)
 {
   if(!media.params.hasLiked)
   {
     if(!media.params.likeCount <= 20)
     {
-      if(checkTodayLikes(dailyMaxLikeCount, username))
-      {
-        return true;
-      }
+      return true;
     }
   }
 
   return false;
 }
 
-function likeMedia(media, instaSession, username, db, sessionId, commentData, callback)
+function likeMedia(media, instaSession, username, sessionId, commentData, dailyMaxLikeCount, sessionController)
 {
   db.collection("accounts").findOne({username: username}, function(error, userObj)
   {
@@ -112,32 +110,35 @@ function likeMedia(media, instaSession, username, db, sessionId, commentData, ca
       {
         if(session)
         {
-          db.collection("sessions").update({_id: sessionId}, {$pull: {mediaList: media.params.webLink}});
-          db.collection("sessions").update({_id: sessionId}, {$inc: {likesDone: 1}});
-
-          if(session.likesDone +1 >= session.likeCount)
+          if(checkTodayLikes(dailyMaxLikeCount, username, sessionController))
           {
-            logger.log("Like session done");
-            db.collection("sessions").remove({_id: sessionId});
-            callback(username);
-          }
-          Client.Like.create(instaSession, media.id);
-          todayLikeCount ++;
+            db.collection("sessions").update({_id: sessionId}, {$pull: {mediaList: media.params.webLink}});
+            db.collection("sessions").update({_id: sessionId}, {$inc: {likesDone: 1}});
 
-          logger.log("Liked page " + media.params.webLink);
-
-          if(commentData.running == "true")
-          {
-            commentData.commentCounter --;
-            if(commentData.commentCounter <= 0)
+            if(session.likesDone +1 >= session.likeCount)
             {
-              var commentList = commentData.commentList.split("|");
-              var comment = commentList[_.random(0, commentList.length - 1)];
+              logger.log("Like session done");
+              db.collection("sessions").remove({_id: sessionId});
+              sessionController.newLikeSession(username);
+            }
+            Client.Like.create(instaSession, media.id);
 
-              logger.log("Commented on " + media.params.webLink);
+            logger.log("Liked page " + media.params.webLink);
+            todayLikeCount ++;
 
-              Client.Comment.create(instaSession, media.id, comment);
-              commentData.commentCounter = _.random(commentData.lowCommentFrequency, commentData.maxCommentFrequency);
+            if(commentData.running == "true")
+            {
+              commentData.commentCounter --;
+              if(commentData.commentCounter <= 0)
+              {
+                var commentList = commentData.commentList.split("|");
+                var comment = commentList[_.random(0, commentList.length - 1)];
+
+                logger.log("Commented on " + media.params.webLink);
+
+                Client.Comment.create(instaSession, media.id, comment);
+                commentData.commentCounter = _.random(commentData.lowCommentFrequency, commentData.maxCommentFrequency);
+              }
             }
           }
         }
@@ -150,11 +151,11 @@ function likeMedia(media, instaSession, username, db, sessionId, commentData, ca
   });
 }
 
-function checkTodayLikes(dailyMaxLikeCount, username)
+function checkTodayLikes(dailyMaxLikeCount, username, sessionController)
 {
   var date = new Date();
 
-  if(today.getDay() == date.getDay() && today.getMonth() == date.getMonth() && today.getFullYear() == date.getFullYear())
+  if(sameDay(date, today))
   {
     if(todayLikeCount < dailyMaxLikeCount)
     {
@@ -169,18 +170,37 @@ function checkTodayLikes(dailyMaxLikeCount, username)
     return true;
   }
 
-  logger.log("Reached daily max likes")
-  sessionController.cleanLikeSession();
+  logger.log("Reached daily max likes on " + username);
+
+  db.collection("accounts").update({username: username}, {$set: {"settings.autoLike.running": false}});
+  sessionController.cleanLikeSession(username);
+
   setInterval(function()
   {
     var date = new Date();
-    if(today.getDay() != date.getDay())
+    if(!sameDay(date, today))
     {
+      db.collection("accounts").update({username: username}, {$set: {"settings.autoLike.running": true}});
       sessionController.newLikeSession(username);
       today = new Date();
-
     }
   }, 5000);
+  return false;
+}
+
+function sameDay(date1, date2)
+{
+  if(date1.getDay() == date2.getDay())
+  {
+    if(date1.getMonth() == date2.getMonth())
+    {
+      if(date1.getFullYear() == date2.getFullYear())
+      {
+        return true;
+      }
+    }
+  }
+
   return false;
 }
 
