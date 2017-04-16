@@ -62,7 +62,7 @@ Log.pasteMsg = function(msg)
 	return out;
 }
 
-Log.getDateTime() 
+Log.getDateTime = function() 
 {
     var date = new Date();
 
