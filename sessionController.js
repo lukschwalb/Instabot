@@ -90,9 +90,11 @@ function checkSessions()
         if(sessionDate.getMinutes() == date.getMinutes() && sessionDate.getHours() == date.getHours() && !session.executed)
         {
           var type = session.type;
+          logger.log("Found session to execute, type: " + type);
+          
           if(type == "Likebot")
           {
-            var sourceType = session.sourceType
+            var sourceType = session.sourceType;
 
             if(sourceType == "tag")
             {
@@ -103,6 +105,8 @@ function checkSessions()
                   newLikeSession: newLikeSession,
                   cleanLikeSession: cleanLikeSession
                 }
+
+                logger.log("Initializing new like session");
 
                 autolike.likeByTag(session, instaSession, exp);
               });

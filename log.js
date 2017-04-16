@@ -57,12 +57,12 @@ Log.prototype.warning = function(msg)
 
 Log.pasteMsg = function(msg)
 {
-	var out = Log.getTime() + " " + msg;
+	var out = Log.getDateTime() + " " + msg;
 
 	return out;
 }
 
-Log.getTime = function() 
+Log.getDateTime() 
 {
     var date = new Date();
 
@@ -75,5 +75,13 @@ Log.getTime = function()
     var sec  = date.getSeconds();
     sec = (sec < 10 ? "0" : "") + sec;
 
-    return hour + ":" + min + ":" + sec;
+    var year = date.getFullYear();
+
+    var month = date.getMonth() + 1;
+    month = (month < 10 ? "0" : "") + month;
+
+    var day  = date.getDate();
+    day = (day < 10 ? "0" : "") + day;
+
+    return year + ":" + month + ":" + day + ":" + hour + ":" + min + ":" + sec;
 }

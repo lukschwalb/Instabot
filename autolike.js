@@ -22,6 +22,8 @@ var likeByTag = function(session, instaSession, sessionController)
     var feed = new Client.Feed.TaggedMedia(instaSession, tagName);
     var likeDelay = 0;
 
+    logger.log("New like session started");
+
     db.collection("accounts").findOne({username: username}, function(error, userObj)
     {
       var settings = userObj.settings.autoLike;
@@ -119,6 +121,8 @@ function likeMedia(media, instaSession, username, sessionId, commentData, dailyM
             {
               logger.log("Like session done");
               db.collection("sessions").remove({_id: sessionId});
+
+              logger.log("Creating new like session");
               sessionController.newLikeSession(username);
             }
             Client.Like.create(instaSession, media.id);
